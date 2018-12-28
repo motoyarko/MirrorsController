@@ -116,11 +116,19 @@ void timer_handle_interrupts(int timer) {
   static boolean leftMotorRunUp;
   static int leftMotorRunUpTime;
   static boolean leftMotorRunUpCompleted = true;
+
+  static boolean rightMotorRunDown;
+  static int rightMotorRunDownTime;
+  static boolean rightMotorRunDownCompleted;
   
-  static int leftMotorPause;
+  static boolean rightMotorRunUp;
+  static int rightMotorRunUpTime;
+  static boolean rightMotorRunUpCompleted = true;
+  
+//  static int leftMotorPause;
 
   if (digitalRead(reverseON) == HIGH){
-//if motor UP motion isn't completed, need to finish it    
+//if left motor UP motion isn't completed, need to finish it
       if (leftMotorRunUp == true){
         if (leftMotorRunUpTime < left_motor_up){
           leftMotorRunUpTime += 10;
@@ -133,9 +141,22 @@ void timer_handle_interrupts(int timer) {
           leftMotorRunDownCompleted = false;
         }
       }
+//if right motor UP motion isn't completed, need to finish it      
+      if (rightMotorRunUp == true){
+        if (rightMotorRunUpTime < right_motor_up){
+          rightMotorRunUpTime += 10;
+        }
+        else{
+          rightMotorRunUpTime = 0;
+          motorRight(0);
+          rightMotorRunUp = false;
+          rightMotorRunUpCompleted = true;
+          rightMotorRunDownCompleted = false;
+        }
+      }      
 //End of checking motor UP motion
 //Start checking for motor Down motion    
-    if (reverseONdelayFinished == false){
+    if (reverseONdelayFinished == false){  // delay before left motor down
       if (reverseONdelayTimer >= reverse_on_delay){
         reverseONdelayFinished = true;
         reverseOFFdelayFinished = false;
@@ -144,28 +165,48 @@ void timer_handle_interrupts(int timer) {
     else reverseONdelayTimer += 10;
     }
     if (reverseONdelayFinished == true){
-      if (leftMotorRunDown == true){
-        if (leftMotorRunDownTime < left_motor_down){
-          leftMotorRunDownTime += 10;
+      if (leftMotorRunDown == true){ // is left motor runing now?
+        if (leftMotorRunDownTime < left_motor_down){ //if yes and left mirir isn't fully moved down
+          leftMotorRunDownTime += 10; // increase timer
         }
-        else{
-          leftMotorRunDownTime = 0;
-          motorLeft(0);
-          leftMotorRunDown = false;
-          leftMotorRunDownCompleted = true;
-          leftMotorRunUpCompleted = false;
+        else{ // if left mirror is fully moved down 
+          leftMotorRunDownTime = 0; //reset timer
+          motorLeft(0); //stop left motor
+          leftMotorRunDown = false; // set motor run down flag to false
+          leftMotorRunDownCompleted = true; // set motor is fully down flag to true
+          leftMotorRunUpCompleted = false; // set motor is fully UP flag to false. it needs for enabling motor up function when reverse will be OFF
         }
       }
-      if (leftMotorRunDown == false) {
-        if (leftMotorRunDownCompleted == false){
+      if (leftMotorRunDown == false) { // first start of motor down 
+        if (leftMotorRunDownCompleted == false){ //just to check if we have permissions to start it. this flag is configurable in the motor up section
           motorLeft(2);
           leftMotorRunDown = true;
         }
       }
+// same as before for right motor
+      if (rightMotorRunDown == true){ // is right motor runing now?
+        if (rightMotorRunDownTime < right_motor_down){ //if yes and right mirir isn't fully moved down
+          rightMotorRunDownTime += 10; // increase timer
+        }
+        else{ // if right mirror is fully moved down 
+          rightMotorRunDownTime = 0; //reset timer
+          motorRight(0); //stop right motor
+          rightMotorRunDown = false; // set motor run down flag to false
+          rightMotorRunDownCompleted = true; // set motor is fully down flag to true
+          rightMotorRunUpCompleted = false; // set motor is fully UP flag to false. it needs for enabling motor up function when reverse will be OFF
+        }
+      }
+      if (rightMotorRunDown == false) { // first start of motor down 
+        if (rightMotorRunDownCompleted == false){ //just to check if we have permissions to start it. this flag is configurable in the motor up section
+          motorRight(2);
+          rightMotorRunDown = true;
+        }
+      }      
     }
   }
 
   if (digitalRead(reverseON) == LOW) {
+//chevk i left motor is running down    
       if (leftMotorRunDown == true){
         if (leftMotorRunDownTime < left_motor_down){
           leftMotorRunDownTime += 10;
@@ -178,7 +219,20 @@ void timer_handle_interrupts(int timer) {
           leftMotorRunUpCompleted = false;
         }
       }
-          
+//check if right motor running down
+      if (rightMotorRunDown == true){
+        if (rightMotorRunDownTime < right_motor_down){
+          rightMotorRunDownTime += 10;
+        }
+        else{
+          rightMotorRunDownTime = 0;
+          motorRight(0);
+          rightMotorRunDown = false;
+          rightMotorRunDownCompleted = true;
+          rightMotorRunUpCompleted = false;
+        }
+      }      
+//check delay of reverse off          
      if (reverseOFFdelayFinished == false) {
       if (reverseOFFdelayTimer >= reverse_off_delay){
         reverseOFFdelayFinished = true;
@@ -188,6 +242,7 @@ void timer_handle_interrupts(int timer) {
     else reverseOFFdelayTimer += 10;
     }
     if (reverseOFFdelayFinished == true){
+//left motor checks      
       if (leftMotorRunUp == true){
         if (leftMotorRunUpTime < left_motor_up){
           leftMotorRunUpTime += 10;
@@ -206,6 +261,25 @@ void timer_handle_interrupts(int timer) {
           leftMotorRunUp = true;
         }
       }
+// right motor checks
+      if (rightMotorRunUp == true){
+        if (rightMotorRunUpTime < right_motor_up){
+          rightMotorRunUpTime += 10;
+        }
+        else{
+          rightMotorRunUpTime = 0;
+          motorRight(0);
+          rightMotorRunUp = false;
+          rightMotorRunUpCompleted = true;
+          rightMotorRunDownCompleted = false;
+        }
+      }
+      if (rightMotorRunUp == false) {
+        if (rightMotorRunUpCompleted == false){
+          motorRight(1);
+          rightMotorRunUp = true;
+        }
+      }      
     }
   }     
 }
