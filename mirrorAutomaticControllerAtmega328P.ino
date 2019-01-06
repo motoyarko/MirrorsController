@@ -36,16 +36,19 @@
 #define left_motor_down_address 2
 #define right_motor_up_address 4
 #define right_motor_down_address 6
+#define reverse_on_delay_address 8
+#define reverse_off_delay_address 10
 
 //variables
 int left_motor_up;
 int left_motor_down;
 int right_motor_up;
 int right_motor_down;
+int reverse_on_delay;
+int reverse_off_delay;
 //Need to add to EEPROM delay timer between motions UP and Down
 int motor_pause = 500;
-int reverse_on_delay = 1500;
-int reverse_off_delay = 3000;
+
 
 void setup() {
   //configure pins
@@ -83,16 +86,31 @@ void setup() {
   lowByte = EEPROM.read(right_motor_down_address);
   highByte = EEPROM.read(right_motor_down_address + 1);
   right_motor_down = ((lowByte << 0) & 0xFF) + ((highByte << 8) & 0xFF00);
+// added 6.01.2018
+  lowByte = EEPROM.read(reverse_on_delay_address);
+  highByte = EEPROM.read(reverse_on_delay_address + 1);
+  reverse_on_delay = ((lowByte << 0) & 0xFF) + ((highByte << 8) & 0xFF00);
+
+  lowByte = EEPROM.read(reverse_off_delay_address);
+  highByte = EEPROM.read(reverse_off_delay_address + 1);
+  reverse_off_delay = ((lowByte << 0) & 0xFF) + ((highByte << 8) & 0xFF00);  
+//
   
   //print eeprom data to serial
-  Serial.print("left_motor_up = ");
+  Serial.print("left_motor_up=");
   Serial.println(left_motor_up);
-  Serial.print("left_motor_down = ");
+  Serial.print("left_motor_down=");
   Serial.println(left_motor_down);
-  Serial.print("right_motor_up = ");
+  Serial.print("right_motor_up=");
   Serial.println(right_motor_up);
-  Serial.print("right_motor_down = ");
+  Serial.print("right_motor_down=");
   Serial.println(right_motor_down);
+// added 06.01.2018
+  Serial.print("reverse_on_delay=");
+  Serial.println(reverse_on_delay);
+  Serial.print("reverse_off_delay=");
+  Serial.println(reverse_off_delay);
+//end add
 
   timer_init_ISR_100Hz(TIMER_DEFAULT);
 }
@@ -323,6 +341,7 @@ void motorRight(int work) { //0 - STOP, 1 - UP, 2 - DOWN
 void serialEEPROM() {
   if (Serial.available() > 0 ) {
     String str = Serial.readString();
+
     if(str.indexOf("left_motor_up=", 0) > -1){
       String str1 = "left_motor_up=";
       //get value for left_motor_up=
@@ -330,7 +349,7 @@ void serialEEPROM() {
       if ((32767 >= value.toInt()) && (value.toInt() > 0)){ //if value can be integer
         left_motor_up = value.toInt();
         Serial.println("DONE");
-      }else Serial.println("ERROR");
+      }else Serial.println("ERROR. 32767 >= value.toInt()) && (value.toInt() > 0");
     }
     else if(str.indexOf("left_motor_down=", 0) > -1){
             String str1 = "left_motor_down=";
@@ -339,7 +358,7 @@ void serialEEPROM() {
             if ((32767 >= value.toInt()) && (value.toInt() > 0)){ //if value can be integer
               left_motor_down = value.toInt();
               Serial.println("DONE");
-            }else Serial.println("ERROR");
+            }else Serial.println("ERROR. 32767 >= value.toInt()) && (value.toInt() > 0");
           }
     else if(str.indexOf("right_motor_up=") > -1){
             String str1 = "right_motor_up=";
@@ -348,7 +367,7 @@ void serialEEPROM() {
             if ((32767 >= value.toInt()) && (value.toInt() > 0)){ //if value can be integer
               right_motor_up = value.toInt();
               Serial.println("DONE");
-            }else Serial.println("ERROR");
+            }else Serial.println("ERROR. 32767 >= value.toInt()) && (value.toInt() > 0");
           }
     else if(str.indexOf("right_motor_down=") > -1){
             String str1 = "right_motor_down=";
@@ -357,9 +376,29 @@ void serialEEPROM() {
             if ((32767 >= value.toInt()) && (value.toInt() > 0)){ //if value can be integer
               right_motor_down = value.toInt();
               Serial.println("DONE");
-            }else Serial.println("ERROR");
+            }else Serial.println("ERROR. 32767 >= value.toInt()) && (value.toInt() > 0");
           }
-    else if(str.substring(0) == "WRITE"){
+//added 06.01.12018
+    else if(str.indexOf("reverse_on_delay=") > -1){
+            String str1 = "reverse_on_delay=";
+            //get value for right_motor_up=
+            String value = str.substring(str1.length());
+            if ((32767 >= value.toInt()) && (value.toInt() > 0)){ //if value can be integer
+              reverse_on_delay = value.toInt();
+              Serial.println("DONE");
+            }else Serial.println("ERROR. 32767 >= value.toInt()) && (value.toInt() > 0");
+          }
+    else if(str.indexOf("reverse_off_delay=") > -1){
+            String str1 = "reverse_off_delay=";
+            //get value for right_motor_up=
+            String value = str.substring(str1.length());
+            if ((32767 >= value.toInt()) && (value.toInt() > 0)){ //if value can be integer
+              reverse_off_delay = value.toInt();
+              Serial.println("DONE");
+            }else Serial.println("ERROR. 32767 >= value.toInt()) && (value.toInt() > 0");
+          }
+// end add
+    else if(str.substring(0) == "WRITE" or str.substring(0) == "WRITE\r\n" or str.substring(0) == "WRITE\r" or str.substring(0) == "WRITE\n"){
             //write data to EEPROM
             byte hi;
             byte low;
@@ -379,9 +418,33 @@ void serialEEPROM() {
             low = lowByte(right_motor_down);            
             EEPROM.update(right_motor_down_address, low);
             EEPROM.update(right_motor_down_address + 1, hi);
+            //added 06.01.2018
+            hi = highByte(reverse_on_delay);
+            low = lowByte(reverse_on_delay);            
+            EEPROM.update(reverse_on_delay_address, low);
+            EEPROM.update(reverse_on_delay_address + 1, hi);
+            hi = highByte(reverse_off_delay);
+            low = lowByte(reverse_off_delay);            
+            EEPROM.update(reverse_off_delay_address, low);
+            EEPROM.update(reverse_off_delay_address + 1, hi);  
+            // end add          
             Serial.println("DONE");
           }
-    else Serial.println("ERROR");
+    else if(str.substring(0) == "GET" or str.substring(0) == "GET\r\n" or str.substring(0) == "GET\r" or str.substring(0) == "GET\n"){
+      //Get data of values
+        Serial.print("left_motor_up=");
+        Serial.println(left_motor_up);
+        Serial.print("left_motor_down=");
+        Serial.println(left_motor_down);
+        Serial.print("right_motor_up=");
+        Serial.println(right_motor_up);
+        Serial.print("right_motor_down=");
+        Serial.println(right_motor_down);
+        Serial.print("reverse_on_delay=");
+        Serial.println(reverse_on_delay);
+        Serial.print("reverse_off_delay=");
+        Serial.println(reverse_off_delay);
+    }
+    else Serial.println("ERROR don't know what happened " + str);
   }
 }
-
