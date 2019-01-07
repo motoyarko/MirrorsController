@@ -10,8 +10,8 @@
 // left_motor_down=value
 // right_motor_up=value
 // right_motor_down=value
-// reverse_off_delay=value
 // reverse_on_delay=value
+// reverse_off_delay=value
 // WRITE
 //-------values range:---------------
 // 32767 >= value > 0
@@ -20,8 +20,8 @@
 // get_left_motor_down
 // get_right_motor_up
 // get_right_motor_down
-// get_reverse_off_delay
 // get_reverse_on_delay
+// get_reverse_off_delay
 //-------responces:------------------
 // DONE => operation is completed successfully
 // ERROR + string => operation isn't completed successfully
@@ -78,7 +78,9 @@ void setup() {
   motorRight(0);//disable right motor
 
   //com port initialization
+  delay(2000); // test delay
   Serial.begin(115200);
+  delay(2000); //delay for initialising esp8266 module
   //read motors run delays from eeprom
   readFromEEPROM();
   //Start interuptions
