@@ -1,4 +1,4 @@
-#include <Bounce2.h>
+//#include <Bounce2.h>
 #include <ESP8266WiFi.h>
 #include <DNSServer.h>
 #include <ESP8266WebServer.h>
@@ -8,9 +8,9 @@ IPAddress apIP(192, 168, 1, 1);
 DNSServer dnsServer;
 ESP8266WebServer webServer(80);
 
-int setupONpin = 14;
+//int setupONpin = 14;
 
-Bounce setupON = Bounce(setupONpin, 10);
+//Bounce setupON = Bounce(setupONpin, 10);
 
 int left_motor_up;
 int left_motor_down;
@@ -32,20 +32,20 @@ boolean setupMode = false;
 
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(57600);
   delay(2000); //deley for initialising atMega module
-  pinMode(setupONpin, INPUT_PULLUP);
+//  pinMode(setupONpin, INPUT_PULLUP);
 
-  setupON.update();
+//  setupON.update();
 
   //check setup mode on/off
-  if (setupON.read() == HIGH) { //for debug. normal mode is == LOW
+//  if (setupON.read() == HIGH) { //for debug. normal mode is == LOW
     //    Serial.println("setupON:");
-    setupMode = true;
-  }
+//    setupMode = true;
+//  }
 
   //WIfi and access point is turned on only if setup mode is turned on during boot
-  if (setupMode == true) {
+//  if (setupMode == true) {
     WiFi.mode(WIFI_AP);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
     WiFi.softAP("mirror_Controller_SetUp", "12345678");
@@ -66,21 +66,21 @@ void setup() {
       webServer.send(200, "text/html", responseHTML());
     });
     webServer.begin();
-  }
-  else {
-    WiFi.mode(WIFI_OFF);
-    Serial.println("SetupOFF");
-    Serial.println("WiFi off");
-  }
+//  }
+//  else {
+//    WiFi.mode(WIFI_OFF);
+//    Serial.println("SetupOFF");
+//    Serial.println("WiFi off");
+//  }
 
 }
 
 void loop() {
   //webserver and dns server is needed only if setup mode is on
-  if (setupMode == true) {
+//  if (setupMode == true) {
     dnsServer.processNextRequest();
     webServer.handleClient();
-  }
+//  }
 }
 
 //parse params from /args endPoint

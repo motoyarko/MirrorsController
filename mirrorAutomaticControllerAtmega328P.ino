@@ -79,12 +79,13 @@ void setup() {
 
   //com port initialization
   delay(2000); // test delay
-  Serial.begin(115200);
+  Serial.begin(57600);
   delay(2000); //delay for initialising esp8266 module
   //read motors run delays from eeprom
   readFromEEPROM();
   //Start interuptions
-  timer_init_ISR_100Hz(TIMER_DEFAULT);
+  //  timer_init_ISR_100Hz(TIMER_DEFAULT);  // or arduino 16MHz
+  timer_init_ISR(TIMER_DEFAULT, TIMER_PRESCALER_1_8, 10000 - 1); //for arduino 8MHz
 }
 
 void loop() {
@@ -155,7 +156,7 @@ void timer_handle_interrupts(int timer) {
     }
     if (reverseONdelayFinished == true) {
       if (leftMotorRunDown == true) { // is left motor runing now?
-        if (leftMotorRunDownTime < left_motor_down) { //if yes and left mirir isn't fully moved down
+        if (leftMotorRunDownTime < left_motor_down) { //if yes and left motor isn't fully moved down
           leftMotorRunDownTime += 10; // increase timer
         }
         else { // if left mirror is fully moved down
@@ -221,6 +222,11 @@ void timer_handle_interrupts(int timer) {
         rightMotorRunUpCompleted = false;
       }
     }
+    // check for case if reverse was turned on < reverse_on_delay
+    if (reverseONdelayTimer < reverse_on_delay) {
+      reverseONdelayTimer = 0;
+    }
+
     //check delay of reverse off
     if (reverseOFFdelayFinished == false) {
       if (reverseOFFdelayTimer >= reverse_off_delay) {
@@ -463,4 +469,5 @@ void writeToEEPROM() {
   EEPROM.update(reverse_off_delay_address + 1, hi);
   Serial.println("DONE");
 }
+
 
